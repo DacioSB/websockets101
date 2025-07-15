@@ -1,0 +1,19 @@
+{
+  "name": "websocketsstockticker",
+  "version": "1.0.0",
+  "description": "A tiny server with server-initiated updates.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "keywords": [
+    "websockets"
+  ],
+  "author": "Dacio Bezerra",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "ws": "^8.18.3"
+  }
+}

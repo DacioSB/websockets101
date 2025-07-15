@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Real-Time Stock Ticker</title>
+        <style>
+            table { border-collapse: collapse; width: 300px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .up { background-color: #c8e6c9; }
+            .down { background-color: #ffcdd2; }
+        </style>
+    </head>
+    <body>
+        <h1>Live Stock Prices</h1>
+        <table id="stockTable">
+            <thead><tr><th>Symbol</th><th>Price</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <script>
+            const ws = new WebSocket(`ws://${window.location.hostname}:${window.location.port}`);
+            const stockTableBody = document.querySelector('#stockTable tbody');
+            
+            const renderRow = (symbol, price) => {
+                let row = document.getElementById(`stock-${symbol}`);
+                let oldPrice = 0;
+                if (!row) {
+                    row = document.createElement('tr');
+                    row.id = `stock-${symbol}`;
+                    row.innerHTML = `<td>${symbol}</td><td>${price}</td>`;
+                    stockTableBody.appendChild(row);
+                } else {
+                    oldPrice = parseFloat(row.cells[1].textContent);
+                }
+
+                row.cells[1].textContent = price;
+
+                row.classList.remove('up', 'down');
+                if (price > oldPrice) {
+                    row.classList.add('up');
+                } else if (price < oldPrice) {
+                    row.classList.add('down');
+                }
+                setTimeout(() => {
+                    row.classList.remove('up', 'down');
+                }, 500);
+            };
+
+            ws.onmessage = event => {
+                const message = JSON.parse(event.data);
+                if (message.type === 'initialStocks' || message.type === 'stockUpdate') {
+                    for (const symbol in message.data) {
+                        renderRow(symbol, message.data[symbol]);
+                    }
+                }
+        };
+        </script>
+    </body>
+</html>
