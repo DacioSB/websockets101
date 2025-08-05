@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Chat</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: auto;
+            max-width: 600px; 
+            padding: 2rem;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        h1 {
+            color: #007bff;
+        }
+        #chat-window {
+            height: 400px;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            overflow-y: scroll;
+            background-color: #fff;
+            margin-bottom: 1rem;
+        }
+        #messages {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        #messages li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        #messages li:last-child {
+            border-bottom: none;
+        }
+        .system-message {
+            font-style: italic;
+            color: #6c757d;
+        }
+        .my-message {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .other-message {
+            color: #333;
+        }
+        #chat-form {
+            display: flex;
+        }
+        #messageInput {
+            flex-grow: 1;
+            padding: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+        #sendButton {
+            padding: 0.5rem 1rem;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+            cursor: pointer;
+        }
+        #sendButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Chat</h1>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button id="sendButton">Send</button>
+    <ul id="messages"></ul>
+
+    <script>
+        const ws = new WebSocket(`ws://${window.location.hostname}:3000`);
+        const messagesList = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+
+        ws.onopen = () => {
+            console.log("Connected to the WebSocket server.");
+            addMessage("System: Connected to server.");
+        };
+
+        ws.onmessage = event => {
+            const data = JSON.parse(event.data);
+            addMessage(`${data.senderId}: ${data.message}`);
+        };
+
+        ws.onclose = () => {
+            console.log("Disconnected from the WebSocket server.");
+            addMessage("System: Disconnected from server.");
+        };
+
+        ws.onerror = error => {
+            console.error("WebSocket error:", error);
+        };
+
+        sendButton.onclick = () => {
+            const message = messageInput.value;
+            if (message) {
+                ws.send(message);
+                addMessage(`You: ${message}`); // Display our own message immediately
+                messageInput.value = '';
+            }
+        };
+
+        function addMessage(message) {
+            const li = document.createElement('li');
+            li.textContent = message;
+            messagesList.appendChild(li);
+        }
+    </script>
+</body>
+</html>
