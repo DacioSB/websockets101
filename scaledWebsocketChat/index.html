@@ -1,0 +1,101 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scaled WebSocket Chat</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #chat { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
+    .controls { display: flex; gap: 10px; align-items: center; }
+    input { padding: 8px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    #status { font-style: italic; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>Scaled WebSocket Chat with Redis</h1>
+  <p>Open multiple tabs and connect each to a different server port (8080, 8081, 8082) to see the scaling in action.</p>
+
+  <div class="controls">
+    <label for="port">Server Port:</label>
+    <input type="text" id="port" value="8080">
+    <button id="connectBtn">Connect</button>
+    <span id="status">Status: Disconnected</span>
+  </div>
+
+  <div id="chat"></div>
+
+  <div class="controls">
+    <input type="text" id="messageInput" placeholder="Type a message..." disabled>
+    <button id="sendBtn" disabled>Send</button>
+  </div>
+
+  <script>
+    const connectBtn = document.getElementById('connectBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const portInput = document.getElementById('port');
+    const messageInput = document.getElementById('messageInput');
+    const chatBox = document.getElementById('chat');
+    const statusEl = document.getElementById('status');
+    let ws;
+
+    const addMessage = (message) => {
+        const p = document.createElement('p');
+        p.textContent = message;
+        chatBox.appendChild(p);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    connectBtn.addEventListener('click', () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      } else {
+        const port = portInput.value;
+        const wsUrl = `ws://localhost:${port}`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          statusEl.textContent = `Status: Connected to ws://localhost:${port}`;
+          statusEl.style.color = 'green';
+          connectBtn.textContent = 'Disconnect';
+          messageInput.disabled = false;
+          sendBtn.disabled = false;
+          portInput.disabled = true;
+          addMessage(`--- Connected to server on port ${port} ---`);
+        };
+
+        ws.onmessage = (event) => {
+          addMessage(`Received: ${event.data}`);
+        };
+
+        ws.onclose = () => {
+          statusEl.textContent = 'Status: Disconnected';
+          statusEl.style.color = '#555';
+          connectBtn.textContent = 'Connect';
+          messageInput.disabled = true;
+          sendBtn.disabled = true;
+          portInput.disabled = false;
+          addMessage('--- Disconnected from server ---');
+          ws = null;
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket Error:', error);
+          addMessage('--- Error connecting to server ---');
+        };
+      }
+    });
+
+    sendBtn.addEventListener('click', () => {
+      const message = messageInput.value;
+      if (message && ws && ws.readyState === WebSocket.OPEN) {
+        // Prepend sender info for clarity in the demo
+        const senderMessage = `[Sent from port ${portInput.value}]: ${message}`;
+        ws.send(senderMessage);
+        messageInput.value = '';
+      }
+    });
+  </script>
+</body>
+</html>
